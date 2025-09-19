@@ -14,7 +14,8 @@ type ProductsProps = {
 export default function Products({ variants }: ProductsProps) {
   const params = useSearchParams();
   const paramTag = params.get("tag");
-  //Filtered version of variants
+
+  // Filtered version of variants
   const filtered = useMemo(() => {
     if (paramTag && variants) {
       return variants.filter((variant) =>
@@ -26,34 +27,38 @@ export default function Products({ variants }: ProductsProps) {
 
   return (
     <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-12 lg:grid-cols-3">
-      {filtered.map((variant) => (
-        <Link
-          className="py-4"
-          key={variant.id}
-          href={`/products/${variant.id}?id=${variant.id}&productID=${
-            variant.product!.id
-          }&price=${variant.product?.price}&title=${
-            variant.product?.title
-          }&type=${variant.productType}&image=${variant.variantImages[0].url}`}
-        >
-          <Image
-            className="rounded-md pb-2"
-            src={variant.variantImages[0].url}
-            width={720}
-            height={480}
-            alt={variant.product?.title ?? "Product image"}
-          />
-          <div className="flex justify-between">
-            <div>
-              <h2>{variant.product!.title}</h2>
-              <p className="text-sm text-muted-foreground">
-                {variant.productType}
-              </p>
+      {filtered.map((variant) => {
+        const product = variant.product;
+        const imageUrl = variant.variantImages[0]?.url;
+
+        // Eğer product veya image yoksa ürünü atla
+        if (!product || !imageUrl) return null;
+
+        return (
+          <Link
+            className="py-4"
+            key={variant.id}
+            href={`/products/${variant.id}?id=${variant.id}&productID=${product.id}&price=${product.price}&title=${product.title}&type=${variant.productType}&image=${imageUrl}`}
+          >
+            <Image
+              className="rounded-md pb-2"
+              src={imageUrl}
+              width={720}
+              height={480}
+              alt={product.title}
+            />
+            <div className="flex justify-between">
+              <div>
+                <h2>{product.title}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {variant.productType}
+                </p>
+              </div>
+              <div>{formatPrice(product.price)}</div>
             </div>
-            <div>{formatPrice(variant.product?.price!)}</div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
     </div>
   );
 }
