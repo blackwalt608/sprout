@@ -1,10 +1,11 @@
 "use server";
+
 import { NewPasswordSchema } from "@/types/new-password-schema";
 import { createSafeActionClient } from "next-safe-action";
 import { getPasswordResetTokenByToken } from "./tokens";
-import { db } from ".."; // Artık Pool + WebSocket tabanlı
+import { db } from "..";
 import { eq } from "drizzle-orm";
-import { passwordResetTokens, users } from "../schema"; // Schema import et
+import { passwordResetTokens, users } from "../schema";
 import bcrypt from "bcrypt";
 
 const actionClient = createSafeActionClient();
@@ -17,13 +18,12 @@ export const newPassword = actionClient
         return { error: "Missing token" };
       }
 
-      const tokens = await getPasswordResetTokenByToken(token);
-      if (!tokens || tokens.length === 0) {
-        return { error: "Token not found" }; // Buraya girse UI'da görürsün
+      const tokenObj = await getPasswordResetTokenByToken(token);
+      if (!tokenObj) {
+        return { error: "Token not found" };
       }
 
-      const existingToken = tokens[0];
-      const hasExpired = new Date(existingToken.expires) < new Date();
+      const hasExpired = new Date(tokenObj.expires) < new Date();
       if (hasExpired) {
         return { error: "Token has expired" };
       }
@@ -31,17 +31,15 @@ export const newPassword = actionClient
       const findedUser = await db
         .select()
         .from(users)
-        .where(eq(users.email, existingToken.email));
+        .where(eq(users.email, tokenObj.email));
 
       if (findedUser.length === 0) {
-        // length check ekle
         return { error: "User not found" };
       }
 
       const existingUser = findedUser[0];
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Tx direkt db ile, Pool sayesinde çalışır
       await db.transaction(async (tx) => {
         await tx
           .update(users)
@@ -50,12 +48,12 @@ export const newPassword = actionClient
 
         await tx
           .delete(passwordResetTokens)
-          .where(eq(passwordResetTokens.id, existingToken.id));
+          .where(eq(passwordResetTokens.id, tokenObj.id));
       });
 
       return { success: "Password updated" };
     } catch (error) {
-      console.error("newPassword full error:", error); // Detay log: message + stack
+      console.error("newPassword full error:", error);
       return { error: "Something went wrong" };
     }
   });
