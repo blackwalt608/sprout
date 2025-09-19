@@ -5,7 +5,7 @@ import { db } from "@/server";
 import { productVariants } from "@/server/schema";
 import { getAllVariants } from "@/utils/get-all-variants";
 
-export const revalidate = 60 * 60;
+export const revalidate = 3600;
 
 export default async function Home() {
   const data = await db.query.productVariants.findMany({
