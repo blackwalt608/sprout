@@ -43,24 +43,29 @@ export const LoginForm = () => {
   const [showTwoFactor, setShowTwoFactor] = useState(false);
 
   const { execute, status } = useAction(emailSignIn, {
-    onSuccess: (result: any) => {
-      if (result?.success) {
-        setSuccess(result.success);
-        setError("");
+    onSuccess: (result: unknown) => {
+      if (typeof result === "object" && result !== null) {
+        const res = result as {
+          success?: string;
+          error?: string;
+          twoFactor?: boolean;
+          data?: { twoFactor?: boolean };
+        };
+
+        if (res.success) {
+          setSuccess(res.success);
+          setError("");
+        }
+        if (res.twoFactor || res.data?.twoFactor) {
+          setShowTwoFactor(true);
+          setError("");
+          setSuccess("");
+        }
+        if (res.error) {
+          setError(res.error);
+          setSuccess("");
+        }
       }
-      if (result?.data?.twoFactor || result?.twoFactor) {
-        setShowTwoFactor(true);
-        setError("");
-        setSuccess("");
-      }
-      if (result?.error) {
-        setError(result.error);
-        setSuccess("");
-      }
-    },
-    onError: () => {
-      setError("Something went wrong");
-      setSuccess("");
     },
   });
 
@@ -84,7 +89,7 @@ export const LoginForm = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    We've sent you a two factor code to your email.
+                    {"We've sent you a two factor code to your email."}
                   </FormLabel>
                   <FormControl>
                     <InputOTP

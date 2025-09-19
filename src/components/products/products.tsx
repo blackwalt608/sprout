@@ -2,7 +2,6 @@
 
 import formatPrice from "@/lib/format-price";
 import type { GetAllVariantsResult } from "@/utils/get-all-variants";
-import { Badge } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -23,7 +22,7 @@ export default function Products({ variants }: ProductsProps) {
       );
     }
     return variants;
-  }, [paramTag]);
+  }, [paramTag, variants]);
 
   return (
     <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-12 lg:grid-cols-3">

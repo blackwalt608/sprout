@@ -45,7 +45,7 @@ export const ProductVariant = ({
   children: React.ReactNode;
 }) => {
   const form = useForm<z.infer<typeof VariantSchema>>({
-    resolver: zodResolver(VariantSchema) as any,
+    resolver: zodResolver(VariantSchema),
     defaultValues: {
       tags: [],
       variantImages: [],
@@ -102,7 +102,11 @@ export const ProductVariant = ({
     try {
       const result = await execute(values);
     } catch (err) {
-      console.error("Execute error:", err);
+      if (err instanceof Error) {
+        console.error("Execute error:", err.message);
+      } else {
+        console.error("Unknown error:", err);
+      }
     }
   }
   const variantAction = useAction(deleteVariant, {
