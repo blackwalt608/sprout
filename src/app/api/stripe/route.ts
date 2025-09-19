@@ -14,16 +14,20 @@ export async function POST(req: NextRequest) {
   const signingSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 
   const reqText = await req.text();
-  const reqBuffer = Buffer.from(reqText); // artık Node.js ortamında güvenli
+  const reqBuffer = Buffer.from(reqText);
 
-  let event;
+  let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(reqBuffer, sig, signingSecret);
-  } catch (err: any) {
+  } catch (err) {
+    // err'in Error olup olmadığını kontrol ediyoruz
+    if (err instanceof Error) {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
     return NextResponse.json(
-      { error: `Webhook Error: ${err.message}` },
-      { status: 400 }
+      { error: "Unknown webhook error" },
+      { status: 500 }
     );
   }
 
@@ -46,7 +50,7 @@ export async function POST(req: NextRequest) {
       break;
 
     default:
-      console.log(`${event.type}`);
+      console.log(`Unhandled event type: ${event.type}`);
   }
 
   return NextResponse.json({ ok: true });
